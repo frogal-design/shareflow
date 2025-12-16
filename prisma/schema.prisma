@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  username  String     @unique
+  name      String?
+  avatar    String?
+  bio       String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  notes     Note[]
+  shares    Share[]
+  comments  Comment[]
+  sharedWith Share[] @relation("SharedWith")
+}
+
+model Note {
+  id        String     @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares    Share[]
+  comments  Comment[]
+
+  @@index([userId])
+}
+
+model Share {
+  id        String     @id @default(cuid())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  noteId    String
+  note      Note       @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sharedWithId String
+  sharedWith User      @relation("SharedWith", fields: [sharedWithId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId, sharedWithId])
+  @@index([noteId])
+  @@index([userId])
+  @@index([sharedWithId])
+}
+
+model Comment {
+  id        String     @id @default(cuid())
+  content   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  noteId    String
+  note      Note       @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([userId])
+}
